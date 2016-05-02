@@ -13,7 +13,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   # Throw in our provisioning script
-  config.vm.provision "shell", path: "bootstrap.sh", privileged: false, args: ENV['REPO']
+  config.vm.provision "shell", path: "bootstrap.sh", privileged: false, args: 'https://github.com/jehartzog/jehartzog.github.io.git'
 
   # Map localhost:4000 to port 4000 inside the VM
   config.vm.network "forwarded_port", guest: 4000, host: 4000
