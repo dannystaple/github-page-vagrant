@@ -15,8 +15,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Throw in our provisioning script
   config.vm.provision "shell", path: "bootstrap.sh", privileged: false, args: 'https://github.com/jehartzog/jehartzog.github.io.git'
 
-  # Map localhost:4000 to port 4000 inside the VM
-  config.vm.network "forwarded_port", guest: 4000, host: 4000
+  # Map localhost:3000 to port 3000 inside the VM
+  config.vm.network "forwarded_port", guest: 3000, host: 3000
   config.vm.network "private_network", ip: "192.168.3.33"
 
   # Create a shared folder between guest and host
@@ -26,7 +26,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # VirtualBox-specific configuration
   config.vm.provider "virtualbox" do |v|
-    v.customize ["modifyvm", :id, "--memory", 512]
+    v.customize ["modifyvm", :id, "--memory", 1024]
     v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
   end

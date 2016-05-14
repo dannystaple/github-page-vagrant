@@ -59,40 +59,22 @@ if [[ ! -d '/srv/www' ]]; then
     sudo chown vagrant:vagrant '/srv/www'
 fi
 
+echo "If directory isn't present, then pull repo..."
 # Time to pull the repo. If the directory is there, we do nothing,
 # since git should be used to push/pull commits instead.
 if [[ ! -d "$clonedir" ]]; then
+    echo "Directory not present, pulling repo"
     git clone "$clonerepo" "$clonedir"
 fi
 
+echo "Installing and running bundler"
+cd $clonedir
+gem install bundler
+bundle install
 
-# Now, for the Jekyll part. There are some issues you might hit:
-#
-# * Due to jekyll/jekyll#3030 we need to detach Jekyll from the shell manually,
-#   if we want --watch to work.
-#
-# * We need Vagrant >= 1.8 to fix a regression that botched emission of the
-#   vagrant-mounted upstart event, see mitchellh/vagrant#6074 for details.
-#
-# * We need Ruby 2.1.7p400 due to what appears to be a regression in Ruby's
-#   FileUtils core module, see http://stackoverflow.com/q/33091988
+echo "Running npm install and installing gulp"
+npm install --no-bin-links
+npm install gulp --no-bin-links
 
-jekyll=$(which jekyll)
-wrapper="${jekyll/bin/wrappers}"
-log="/home/vagrant/jekyll.log"
-run="start-stop-daemon --start --chuid vagrant:vagrant --exec $wrapper -- serve --host 0.0.0.0 --source $clonedir --destination /home/vagrant/_site --watch --force_polling >> $log 2>&1 &"
-eval $run
-
-cat << UPSTART | sudo tee /etc/init/jekyll.conf > /dev/null
-description "Jekyll"
-author "kappataumu <hello@kappataumu.com>"
-
-start on vagrant-mounted MOUNTPOINT=/srv/www
-
-exec $run
-UPSTART
-
-end_seconds="$(date +%s)"
-echo "-----------------------------"
-echo "Provisioning complete in "$(expr $end_seconds - $start_seconds)" seconds"
-echo "You can now use 'less -S +F $log' to monitor Jekyll."
+echo "Install complete, starting gulp"
+gulp
