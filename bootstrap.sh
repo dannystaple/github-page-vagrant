@@ -74,7 +74,9 @@ bundle install
 
 echo "Running npm install and installing gulp"
 npm install --no-bin-links
-npm install gulp --no-bin-links
+sudo un -g gulp && npm un gulp
+sudo npm i -g gulp
+npm -i --save-dev gulp --no-bin-links
 
 echo "Install complete, starting gulp"
 gulp

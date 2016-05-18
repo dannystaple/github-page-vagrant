@@ -16,7 +16,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "shell", path: "bootstrap.sh", privileged: false, args: 'https://github.com/jehartzog/jehartzog.github.io.git'
 
   # Map localhost:3000 to port 3000 inside the VM
-  config.vm.network "forwarded_port", guest: 3000, host: 3000
+  config.vm.network "forwarded_port", guest: 3000, host: 3001
   config.vm.network "private_network", ip: "192.168.3.33"
 
   # Create a shared folder between guest and host
