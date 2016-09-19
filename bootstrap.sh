@@ -2,7 +2,6 @@
 
 : ${1?"No repo. Set the REPO environment variable and try again!"}
 clonerepo=${1}
-clonedir="/srv/www/$(basename $clonerepo)"
 
 start_seconds="$(date +%s)"
 echo "Welcome to the initialization script."
@@ -45,13 +44,6 @@ ruby --version
 # https://github.com/github/pages-gem
 gem install github-pages
 
-# Preemptively accept Github's SSH fingerprint, but only
-# if we previously haven't done so.
-fingerprint="$(ssh-keyscan -H github.com)"
-if ! grep -qs "$fingerprint" ~/.ssh/known_hosts; then
-    echo "$fingerprint" >> ~/.ssh/known_hosts
-fi
-
 # Vagrant should've created /srv/www according to the Vagrantfile,
 # but let's make sure it exists even if run directly.
 if [[ ! -d '/srv/www' ]]; then
@@ -59,26 +51,33 @@ if [[ ! -d '/srv/www' ]]; then
     sudo chown vagrant:vagrant '/srv/www'
 fi
 
-# echo "If directory isn't present, then pull repo..."
-# # Time to pull the repo. If the directory is there, we do nothing,
-# # since git should be used to push/pull commits instead.
-# if [[ ! -d "$clonedir" ]]; then
-#     echo "Directory not present, pulling repo"
-#     git clone "$clonerepo" "$clonedir"
-# fi
-ln -s "/vagrant/${clonerepo}" "${clonedir}"
+# Now, for the Jekyll part. There are some issues you might hit:
+#
+# * Due to jekyll/jekyll#3030 we need to detach Jekyll from the shell manually,
+#   if we want --watch to work.
+#
+# * We need Vagrant >= 1.8 to fix a regression that botched emission of the
+#   vagrant-mounted upstart event, see mitchellh/vagrant#6074 for details.
+#
+# * We need Ruby 2.1.7p400 due to what appears to be a regression in Ruby's
+#   FileUtils core module, see http://stackoverflow.com/q/33091988
 
+jekyll=$(which jekyll)
+wrapper="${jekyll/bin/wrappers}"
+log="/home/vagrant/jekyll.log"
+run="start-stop-daemon --start --chuid vagrant:vagrant --exec $wrapper -- serve --host 0.0.0.0 --source /vagrant/${clonerepo} --destination /home/vagrant/_site --watch --force_polling >> $log 2>&1 &"
+eval $run
 
-echo "Installing and running bundler"
-cd $clonedir
-gem install bundler
-bundle install
+cat << UPSTART | sudo tee /etc/init/jekyll.conf > /dev/null
+description "Jekyll"
+author "kappataumu <hello@kappataumu.com>"
 
-echo "Running npm install and installing gulp"
-npm install --no-bin-links
-sudo un -g gulp && npm un gulp
-sudo npm i -g gulp
-npm -i --save-dev gulp --no-bin-links
+start on vagrant-mounted MOUNTPOINT=/srv/www
 
-echo "Install complete, starting gulp"
-gulp
+exec $run
+UPSTART
+
+end_seconds="$(date +%s)"
+echo "-----------------------------"
+echo "Provisioning complete in "$(expr $end_seconds - $start_seconds)" seconds"
+echo "You can now use 'less -S +F $log' to monitor Jekyll."
