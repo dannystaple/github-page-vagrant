@@ -59,13 +59,15 @@ if [[ ! -d '/srv/www' ]]; then
     sudo chown vagrant:vagrant '/srv/www'
 fi
 
-echo "If directory isn't present, then pull repo..."
-# Time to pull the repo. If the directory is there, we do nothing,
-# since git should be used to push/pull commits instead.
-if [[ ! -d "$clonedir" ]]; then
-    echo "Directory not present, pulling repo"
-    git clone "$clonerepo" "$clonedir"
-fi
+# echo "If directory isn't present, then pull repo..."
+# # Time to pull the repo. If the directory is there, we do nothing,
+# # since git should be used to push/pull commits instead.
+# if [[ ! -d "$clonedir" ]]; then
+#     echo "Directory not present, pulling repo"
+#     git clone "$clonerepo" "$clonedir"
+# fi
+ln -s "/vagrant/${clonerepo}" "${clonedir}"
+
 
 echo "Installing and running bundler"
 cd $clonedir
